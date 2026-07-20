@@ -3,7 +3,14 @@ import base64
 import json
 
 from dotenv import load_dotenv
-from openai import OpenAI
+from openai import (
+    OpenAI,
+    APIError,
+    APIConnectionError,
+    APITimeoutError,
+    AuthenticationError,
+    RateLimitError,
+)
 
 
 # ---------------------------------------
@@ -19,7 +26,10 @@ def create_openai_client():
     api_key = os.getenv("OPENAI_API_KEY")
 
     if not api_key:
-        raise ValueError("OPENAI_API_KEY not found in .env file")
+        raise ValueError(
+            "OPENAI_API_KEY not found. Check that the .env file exists "
+            "and contains OPENAI_API_KEY."
+        )
 
     return OpenAI(api_key=api_key)
 
@@ -47,7 +57,10 @@ def encode_image_to_base64(image_path):
         print(f"Error type: {type(error).__name__}")
         print(f"Message: {error}")
         print(f"Image path: {image_path}")
-        print("Suggestion: Check that the image exists and the path is correct.")
+        print(
+            "Suggestion: Check that the image exists and that the "
+            "file path is correct."
+        )
         raise
 
     except PermissionError as error:
@@ -56,17 +69,9 @@ def encode_image_to_base64(image_path):
         print(f"Error type: {type(error).__name__}")
         print(f"Message: {error}")
         print(f"Image path: {image_path}")
-        print("Suggestion: Check the file permissions.")
+        print("Suggestion: Check the image file permissions.")
         raise
 
-# TEST: Encode one image to Base64
-
-print("\n=== TEST: MISSING IMAGE ===")
-
-try:
-    encode_image_to_base64("images/image_that_does_not_exist.png")
-except FileNotFoundError:
-    print("Missing image test completed successfully.")
 
 # ---------------------------------------
 # PROMPT CREATION HELPER
@@ -133,8 +138,8 @@ Create a product listing that includes:
 - Highlight benefits, not only features
 - Mention only details visible in the image or provided information
 - Avoid clichés, excessive hype, forced jokes or overly humorous language
-- The title and description must remain consistent with the provided product name.
-- Do not describe the product as Hansel and Gretel unless that title is explicitly provided or clearly visible in the image.
+- The title and description must remain consistent with the provided product name
+- Do not describe the product as Hansel and Gretel unless that title is explicitly provided or clearly visible in the image
 
 3. Key Features
 - Exactly 5 bullet points
@@ -207,25 +212,15 @@ def parse_json_response(response_text):
         print(f"Line: {error.lineno}")
         print(f"Column: {error.colno}")
         print(f"Character position: {error.pos}")
-        print("Context: The OpenAI response could not be converted into valid JSON.")
-        print("Suggestion: Check that the model returned complete JSON with valid quotes, commas and brackets.")
+        print(
+            "Context: The OpenAI response could not be converted "
+            "into valid JSON."
+        )
+        print(
+            "Suggestion: Check that the model returned complete JSON "
+            "with valid quotes, commas and brackets."
+        )
         raise
-
-    # TEST: Parse invalid JSON response
-
-print("\n=== TEST: INVALID JSON RESPONSE ===")
-
-invalid_json_response = """
-{
-    "title": "Hansel y Gretel"
-    "description": "Illustrated book"
-}
-"""
-
-try:
-    parse_json_response(invalid_json_response)
-except json.JSONDecodeError:
-    print("Invalid JSON test completed successfully.")
 
 
 # ---------------------------------------
@@ -234,21 +229,85 @@ except json.JSONDecodeError:
 
 def generate_listing(client, prompt, encoded_image):
     """
-    Send the prompt and image to OpenAI and return the raw response.
+    Send the prompt and image to OpenAI and return the response text.
     """
 
     try:
-        # ... aquí va exactamente el código que ya tienes ...
+        response = client.responses.create(
+            model="gpt-4.1-mini",
+            input=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "input_text",
+                            "text": prompt
+                        },
+                        {
+                            "type": "input_image",
+                            "image_url": (
+                                f"data:image/jpeg;base64,{encoded_image}"
+                            )
+                        }
+                    ]
+                }
+            ]
+        )
 
         return response.output_text
 
-    except Exception as error:
+    except AuthenticationError as error:
         print("\n=== OPENAI API ERROR ===")
         print("Function: generate_listing()")
         print(f"Error type: {type(error).__name__}")
         print(f"Message: {error}")
-        print("Context: Failed while requesting a product listing from the OpenAI API.")
-        print("Suggestion: Check your API key, internet connection, model name, or API quota.")
+        print("Context: OpenAI rejected the API credentials.")
+        print("Suggestion: Check the OPENAI_API_KEY value in the .env file.")
+        raise
+
+    except RateLimitError as error:
+        print("\n=== OPENAI API ERROR ===")
+        print("Function: generate_listing()")
+        print(f"Error type: {type(error).__name__}")
+        print(f"Message: {error}")
+        print("Context: The OpenAI request reached a rate or quota limit.")
+        print("Suggestion: Check API quota and retry after a short delay.")
+        raise
+
+    except APITimeoutError as error:
+        print("\n=== OPENAI API ERROR ===")
+        print("Function: generate_listing()")
+        print(f"Error type: {type(error).__name__}")
+        print(f"Message: {error}")
+        print("Context: The OpenAI request timed out.")
+        print("Suggestion: Check the connection and retry the request.")
+        raise
+
+    except APIConnectionError as error:
+        print("\n=== OPENAI API ERROR ===")
+        print("Function: generate_listing()")
+        print(f"Error type: {type(error).__name__}")
+        print(f"Message: {error}")
+        print("Context: The application could not connect to OpenAI.")
+        print("Suggestion: Check the internet connection and retry.")
+        raise
+
+    except APIError as error:
+        print("\n=== OPENAI API ERROR ===")
+        print("Function: generate_listing()")
+        print(f"Error type: {type(error).__name__}")
+        print(f"Message: {error}")
+        print("Context: OpenAI returned an API error.")
+        print("Suggestion: Check the model name, request data and API status.")
+        raise
+
+    except Exception as error:
+        print("\n=== LISTING GENERATION ERROR ===")
+        print("Function: generate_listing()")
+        print(f"Error type: {type(error).__name__}")
+        print(f"Message: {error}")
+        print("Context: An unexpected error occurred while generating a listing.")
+        print("Suggestion: Review the request inputs and traceback.")
         raise
 
 
@@ -258,12 +317,26 @@ def generate_listing(client, prompt, encoded_image):
 
 def process_product(client, product):
     """
-    Process one product and return its generated listing.
+    Coordinate the processing of one product.
     """
 
-    if not os.path.exists(product["image_path"]):
-        raise FileNotFoundError(
-            f"Image not found: {product['image_path']}"
+    required_fields = [
+        "id",
+        "name",
+        "price",
+        "category",
+        "image_path"
+    ]
+
+    missing_fields = [
+        field for field in required_fields
+        if field not in product
+    ]
+
+    if missing_fields:
+        raise ValueError(
+            "Missing required product fields: "
+            + ", ".join(missing_fields)
         )
 
     prompt = create_product_listing_prompt(
@@ -277,17 +350,17 @@ def process_product(client, product):
         product["image_path"]
     )
 
-    response = generate_listing(
+    response_text = generate_listing(
         client,
         prompt,
         encoded_image
     )
 
     parsed_listing = parse_json_response(
-        response.output_text
+        response_text
     )
 
-    result = {
+    return {
         "product_id": product["id"],
         "original_name": product["name"],
         "price": product["price"],
@@ -295,8 +368,6 @@ def process_product(client, product):
         "image_path": product["image_path"],
         "listing": parsed_listing
     }
-
-    return result
 
 
 # ---------------------------------------
@@ -332,7 +403,10 @@ def save_results_to_json(results, output_path):
         print(f"Error type: {type(error).__name__}")
         print(f"Message: {error}")
         print(f"Output path: {output_path}")
-        print("Suggestion: Check that you have permission to write to this location.")
+        print(
+            "Suggestion: Check that you have permission to write "
+            "to this location."
+        )
         raise
 
     except OSError as error:
@@ -344,71 +418,58 @@ def save_results_to_json(results, output_path):
         print("Suggestion: Check the output path and available disk space.")
         raise
 
-# TEST: Save results to a missing folder
 
-print("\n=== TEST: INVALID OUTPUT PATH ===")
+# ---------------------------------------
+# ERROR HANDLING TESTS
+# ---------------------------------------
 
-try:
-    save_results_to_json(
-        [{"test": "data"}],
-        "folder_that_does_not_exist/test_results.json"
-    )
-except FileNotFoundError:
-    print("Invalid output path test completed successfully.")
+def run_error_handling_tests():
+    """
+    Run controlled tests for required error scenarios.
+    """
+
+    # TEST: Encode a missing image
+    print("\n=== TEST: MISSING IMAGE ===")
+
+    try:
+        encode_image_to_base64(
+            "images/image_that_does_not_exist.png"
+        )
+    except FileNotFoundError:
+        print("Missing image test completed successfully.")
+
+    # TEST: Parse invalid JSON response
+    print("\n=== TEST: INVALID JSON RESPONSE ===")
+
+    invalid_json_response = """
+{
+    "title": "Hansel y Gretel"
+    "description": "Illustrated book"
+}
+"""
+
+    try:
+        parse_json_response(invalid_json_response)
+    except json.JSONDecodeError:
+        print("Invalid JSON test completed successfully.")
+
+    # TEST: Save results to a missing folder
+    print("\n=== TEST: INVALID OUTPUT PATH ===")
+
+    try:
+        save_results_to_json(
+            [{"test": "data"}],
+            "folder_that_does_not_exist/test_results.json"
+        )
+    except FileNotFoundError:
+        print("Invalid output path test completed successfully.")
 
 
 # ---------------------------------------
-# TEST: Create the OpenAI client
-# ---------------------------------------
-
-client = create_openai_client()
-print("OpenAI client created successfully!")
-
-
-# -------------------------------------------------
-# TEST: Verify that the OpenAI API connection works
-# -------------------------------------------------
-
-# response = client.responses.create(
-#     model="gpt-4.1-mini",
-#     input="Hello! Tell me one fun fact about Hansel and Gretel fairytale."
-# )
-
-# print("\n=== API CONNECTION TEST ===")
-# print(response.output_text)
-
-
-# -------------------------------------------------
-# DATASET LOADING TEST
-# -------------------------------------------------
-
-try:
-    from datasets import load_dataset
-    import pandas as pd
-
-    print("\nLoading Hugging Face dataset...")
-
-    dataset = load_dataset(
-        "ashraq/fashion-product-images-small",
-        split="train[:10]"
-    )
-
-    products_df = pd.DataFrame(dataset)
-
-    print(f"Hugging Face products loaded: {len(products_df)}")
-    print(f"Dataset columns: {products_df.columns.tolist()}")
-
-except Exception as error:
-    print("\nCould not load the Hugging Face dataset.")
-    print(f"Error: {error}")
-    print("Continuing with the local book dataset.")
-
-
-# -------------------------------------------------
 # PRODUCT DATA
-# -------------------------------------------------
+# ---------------------------------------
 
-products_data = [
+PRODUCTS_DATA = [
     {
         "id": 1,
         "name": "The Original Folk & Fairy Tales of the Brothers Grimm",
@@ -442,88 +503,147 @@ products_data = [
     }
 ]
 
-print(f"Products prepared: {len(products_data)}")
-
 
 # ---------------------------------------
-# TEST: Encode one image to Base64
+# MAIN WORKFLOW
 # ---------------------------------------
 
-sample_path = products_data[0]["image_path"]
+def main():
+    """
+    Run tests, process all products and save successful listings.
+    """
 
-encoded_image = encode_image_to_base64(sample_path)
-
-print(f"\nEncoded image length: {len(encoded_image)} characters")
-print(f"Encoded prefix: {encoded_image[:40]}...")
-
-
-# -------------------------------------------------
-# TEST: Prepare the first product
-# -------------------------------------------------
-
-product = products_data[0]
-
-print("\n=== FIRST PRODUCT ===")
-print(product)
-
-
-# -------------------------------------------------
-# TEST: Generate the prompt
-# -------------------------------------------------
-
-prompt = create_product_listing_prompt(
-    product_name=product["name"],
-    price=product["price"],
-    category=product["category"],
-    additional_info=product.get("additional_info")
-)
-
-print("\n=== PROMPT PREVIEW ===")
-print(prompt[:700])
-
-
-# -------------------------------------------------
-# PROCESS MULTIPLE PRODUCTS
-# Generate and parse listings for all products
-# -------------------------------------------------
-
-generated_listings = []
-
-for product in products_data:
-    print(f"\nProcessing product {product['id']}: {product['name']}")
+    run_error_handling_tests()
 
     try:
-        result = process_product(
-            client,
-            product
+        client = create_openai_client()
+        print("\nOpenAI client created successfully!")
+
+    except ValueError as error:
+        print("\n=== OPENAI CLIENT ERROR ===")
+        print("Function: create_openai_client()")
+        print(f"Error type: {type(error).__name__}")
+        print(f"Message: {error}")
+        print("Suggestion: Add OPENAI_API_KEY to the .env file.")
+        return
+
+    # Optional dataset-loading demonstration from the original lab
+    try:
+        from datasets import load_dataset
+        import pandas as pd
+
+        print("\nLoading Hugging Face dataset...")
+
+        dataset = load_dataset(
+            "ashraq/fashion-product-images-small",
+            split="train[:10]"
         )
 
-        generated_listings.append(result)
+        products_df = pd.DataFrame(dataset)
 
-        print("Listing generated successfully.")
-        print(f"Title: {result['listing']['title']}")
-
-    except FileNotFoundError as error:
-        print(f"Image error: {error}")
-
-    except json.JSONDecodeError as error:
-        print(f"JSON parsing error: {error}")
+        print(f"Hugging Face products loaded: {len(products_df)}")
+        print(f"Dataset columns: {products_df.columns.tolist()}")
 
     except Exception as error:
-        print(f"Unexpected error: {error}")
+        print("\nCould not load the Hugging Face dataset.")
+        print(f"Error type: {type(error).__name__}")
+        print(f"Message: {error}")
+        print("Continuing with the local book dataset.")
+
+    print(f"Products prepared: {len(PRODUCTS_DATA)}")
+
+    # TEST: Encode one valid image to Base64
+    sample_path = PRODUCTS_DATA[0]["image_path"]
+    encoded_image = encode_image_to_base64(sample_path)
+
+    print(f"\nEncoded image length: {len(encoded_image)} characters")
+    print(f"Encoded prefix: {encoded_image[:40]}...")
+
+    # TEST: Prepare the first product
+    first_product = PRODUCTS_DATA[0]
+
+    print("\n=== FIRST PRODUCT ===")
+    print(first_product)
+
+    # TEST: Generate the prompt
+    prompt = create_product_listing_prompt(
+        product_name=first_product["name"],
+        price=first_product["price"],
+        category=first_product["category"],
+        additional_info=first_product.get("additional_info")
+    )
+
+    print("\n=== PROMPT PREVIEW ===")
+    print(prompt[:700])
+
+    # PROCESS MULTIPLE PRODUCTS
+    generated_listings = []
+
+    for product in PRODUCTS_DATA:
+        print(
+            f"\nProcessing product {product['id']}: "
+            f"{product['name']}"
+        )
+
+        try:
+            result = process_product(
+                client,
+                product
+            )
+
+            generated_listings.append(result)
+
+            print("Listing generated successfully.")
+            print(f"Title: {result['listing']['title']}")
+
+        except FileNotFoundError:
+            print("Product skipped because its image could not be loaded.")
+
+        except json.JSONDecodeError:
+            print("Product skipped because the API response was not valid JSON.")
+
+        except ValueError as error:
+            print("\n=== PRODUCT DATA ERROR ===")
+            print("Function: process_product()")
+            print(f"Error type: {type(error).__name__}")
+            print(f"Message: {error}")
+            print(f"Product context: {product}")
+            print("Suggestion: Check the required product fields.")
+
+        except (
+            AuthenticationError,
+            RateLimitError,
+            APITimeoutError,
+            APIConnectionError,
+            APIError
+        ):
+            print("Product skipped because the OpenAI request failed.")
+
+        except Exception as error:
+            print("\n=== UNEXPECTED PROCESSING ERROR ===")
+            print("Function: main() product loop")
+            print(f"Error type: {type(error).__name__}")
+            print(f"Message: {error}")
+            print(f"Product context: {product}")
+            print("Suggestion: Review the traceback and product input.")
+
+    # SAVE RESULTS TO JSON
+    output_path = "output/generated_listings.json"
+
+    try:
+        save_results_to_json(
+            generated_listings,
+            output_path
+        )
+
+    except OSError:
+        print("Results could not be saved.")
+        return
+
+    print("\nProcessing completed.")
+    print(f"Successful listings: {len(generated_listings)}")
+    print(f"Results saved to: {output_path}")
 
 
-# -------------------------------------------------
-# SAVE RESULTS TO JSON
-# -------------------------------------------------
-
-output_path = "output/generated_listings.json"
-
-save_results_to_json(
-    generated_listings,
-    output_path
-)
-
-print("\nProcessing completed.")
-print(f"Successful listings: {len(generated_listings)}")
-print(f"Results saved to: {output_path}")
+if __name__ == "__main__":
+    main()
