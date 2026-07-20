@@ -33,13 +33,40 @@ def encode_image_to_base64(image_path):
     Convert an image into a Base64 string.
     """
 
-    with open(image_path, "rb") as image_file:
-        encoded_image = base64.b64encode(
-            image_file.read()
-        ).decode("utf-8")
+    try:
+        with open(image_path, "rb") as image_file:
+            encoded_image = base64.b64encode(
+                image_file.read()
+            ).decode("utf-8")
 
-    return encoded_image
+        return encoded_image
 
+    except FileNotFoundError as error:
+        print("\n=== IMAGE ENCODING ERROR ===")
+        print("Function: encode_image_to_base64()")
+        print(f"Error type: {type(error).__name__}")
+        print(f"Message: {error}")
+        print(f"Image path: {image_path}")
+        print("Suggestion: Check that the image exists and the path is correct.")
+        raise
+
+    except PermissionError as error:
+        print("\n=== IMAGE ENCODING ERROR ===")
+        print("Function: encode_image_to_base64()")
+        print(f"Error type: {type(error).__name__}")
+        print(f"Message: {error}")
+        print(f"Image path: {image_path}")
+        print("Suggestion: Check the file permissions.")
+        raise
+
+# TEST: Encode one image to Base64
+
+print("\n=== TEST: MISSING IMAGE ===")
+
+try:
+    encode_image_to_base64("images/image_that_does_not_exist.png")
+except FileNotFoundError:
+    print("Missing image test completed successfully.")
 
 # ---------------------------------------
 # PROMPT CREATION HELPER
@@ -169,7 +196,36 @@ def parse_json_response(response_text):
     if cleaned_response.endswith("```"):
         cleaned_response = cleaned_response[:-3]
 
-    return json.loads(cleaned_response.strip())
+    try:
+        return json.loads(cleaned_response.strip())
+
+    except json.JSONDecodeError as error:
+        print("\n=== JSON PARSING ERROR ===")
+        print("Function: parse_json_response()")
+        print(f"Error type: {type(error).__name__}")
+        print(f"Message: {error}")
+        print(f"Line: {error.lineno}")
+        print(f"Column: {error.colno}")
+        print(f"Character position: {error.pos}")
+        print("Context: The OpenAI response could not be converted into valid JSON.")
+        print("Suggestion: Check that the model returned complete JSON with valid quotes, commas and brackets.")
+        raise
+
+    # TEST: Parse invalid JSON response
+
+print("\n=== TEST: INVALID JSON RESPONSE ===")
+
+invalid_json_response = """
+{
+    "title": "Hansel y Gretel"
+    "description": "Illustrated book"
+}
+"""
+
+try:
+    parse_json_response(invalid_json_response)
+except json.JSONDecodeError:
+    print("Invalid JSON test completed successfully.")
 
 
 # ---------------------------------------
@@ -178,29 +234,22 @@ def parse_json_response(response_text):
 
 def generate_listing(client, prompt, encoded_image):
     """
-    Send the product information and image to OpenAI.
+    Send the prompt and image to OpenAI and return the raw response.
     """
 
-    return client.responses.create(
-        model="gpt-4.1-mini",
-        input=[
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "input_text",
-                        "text": prompt
-                    },
-                    {
-                        "type": "input_image",
-                        "image_url": (
-                            f"data:image/jpeg;base64,{encoded_image}"
-                        )
-                    }
-                ]
-            }
-        ]
-    )
+    try:
+        # ... aquí va exactamente el código que ya tienes ...
+
+        return response.output_text
+
+    except Exception as error:
+        print("\n=== OPENAI API ERROR ===")
+        print("Function: generate_listing()")
+        print(f"Error type: {type(error).__name__}")
+        print(f"Message: {error}")
+        print("Context: Failed while requesting a product listing from the OpenAI API.")
+        print("Suggestion: Check your API key, internet connection, model name, or API quota.")
+        raise
 
 
 # ---------------------------------------
@@ -259,13 +308,53 @@ def save_results_to_json(results, output_path):
     Save the generated product listings to a JSON file.
     """
 
-    with open(output_path, "w", encoding="utf-8") as output_file:
-        json.dump(
-            results,
-            output_file,
-            ensure_ascii=False,
-            indent=4
-        )
+    try:
+        with open(output_path, "w", encoding="utf-8") as output_file:
+            json.dump(
+                results,
+                output_file,
+                ensure_ascii=False,
+                indent=4
+            )
+
+    except FileNotFoundError as error:
+        print("\n=== JSON SAVING ERROR ===")
+        print("Function: save_results_to_json()")
+        print(f"Error type: {type(error).__name__}")
+        print(f"Message: {error}")
+        print(f"Output path: {output_path}")
+        print("Suggestion: Check that the destination folder exists.")
+        raise
+
+    except PermissionError as error:
+        print("\n=== JSON SAVING ERROR ===")
+        print("Function: save_results_to_json()")
+        print(f"Error type: {type(error).__name__}")
+        print(f"Message: {error}")
+        print(f"Output path: {output_path}")
+        print("Suggestion: Check that you have permission to write to this location.")
+        raise
+
+    except OSError as error:
+        print("\n=== JSON SAVING ERROR ===")
+        print("Function: save_results_to_json()")
+        print(f"Error type: {type(error).__name__}")
+        print(f"Message: {error}")
+        print(f"Output path: {output_path}")
+        print("Suggestion: Check the output path and available disk space.")
+        raise
+
+# TEST: Save results to a missing folder
+
+print("\n=== TEST: INVALID OUTPUT PATH ===")
+
+try:
+    save_results_to_json(
+        [{"test": "data"}],
+        "folder_that_does_not_exist/test_results.json"
+    )
+except FileNotFoundError:
+    print("Invalid output path test completed successfully.")
 
 
 # ---------------------------------------
