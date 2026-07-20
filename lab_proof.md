@@ -155,7 +155,7 @@ Results saved to: output/generated_listings.json
 
 ### 📸 Execution Evidence
 
-![Successful Processing](images/example_successful_processing.png)
+![Successful Processing](screenshots/example_successful_processing.png)
 
 ---
 
@@ -186,80 +186,17 @@ Example structure:
 ```
 
 ---
-
 ## 🚨 Error Handling
 
-The refactored version handles errors close to the part of the workflow where they happen.
+The refactored version includes dedicated error handling for common failure scenarios, such as missing files, invalid JSON responses and file output errors.
 
-The error messages include:
+The application reports clear error messages to simplify debugging and improve maintainability.
 
-- the function where the error occurred
-- the type of error
-- the file path or value involved
-- a short suggestion for resolving the problem
+### 📸 Error Handling Test
 
-The following scenarios were tested:
+![Error Handling Test](screenshots/error_handling_test.png)
 
-| Test | Result |
-|---|---|
-| Successful execution | Three products were processed and saved correctly. |
-| Missing image | The application detected the missing file and reported its path. |
-| Invalid JSON | The parser identified the location of the malformed JSON. |
-| Invalid output path | The application reported the destination folder error. |
 
----
-
-### ❌ Missing Image
-
-To test file handling, I used an image path that does not exist.
-
-The application reported:
-
-- the function where the error happened
-- the `FileNotFoundError`
-- the missing image path
-- a suggestion to check the filename and folder
-
-### 📸 Evidence
-
-![Missing Image Error](images/example_missing_image_error.png)
-
----
-
-### ❌ Invalid JSON Response
-
-To test the parser, I passed a malformed JSON response.
-
-The application reported:
-
-- the `JSONDecodeError`
-- the line number
-- the column number
-- the character position
-- part of the response that caused the problem
-
-### 📸 Evidence
-
-![Invalid JSON Error](images/example_invalid_json_error.png)
-
----
-
-### ❌ Invalid Output Path
-
-To test file writing, I used an output path that could not be created.
-
-The application reported:
-
-- the function where the error happened
-- the invalid destination path
-- the exception message
-- a suggestion to check or create the folder
-
-### 📸 Evidence
-
-![Invalid Output Path Error](images/example_invalid_output_path_error.png)
-
----
 
 ## 🤖 OpenAI API Error Handling
 
