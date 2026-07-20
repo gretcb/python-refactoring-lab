@@ -1,0 +1,59 @@
+[
+    {
+        "product_id": 1,
+        "original_name": "The Original Folk & Fairy Tales of the Brothers Grimm",
+        "price": 34.95,
+        "category": "Books",
+        "image_path": "images/producto1.png",
+        "listing": {
+            "title": "The Original Folk & Fairy Tales of the Brothers Grimm",
+            "description": "Discover the magic and mystery of the Brothers Grimm with this beautifully designed collection of their original folk and fairy tales. This edition features unique, vintage-inspired illustrations by Angela Dezső, capturing the enchanting and sometimes dark atmosphere of these timeless stories. Printed on a rich purple cover, the book invites readers into a world where imagination meets tradition. Perfect for lovers of classic literature, this collection brings the first edition tales to your bookshelf in a captivating and elegant package.",
+            "features": [
+                "Complete first edition collection",
+                "Original folk and fairy tales included",
+                "Illustrations by Angela Dezső",
+                "Elegant purple cover design",
+                "Perfect for classic literature fans"
+            ],
+            "keywords": "Brothers Grimm, fairy tales, folk tales, classic literature, illustrated book, vintage design, traditional stories, collection, first edition, timeless tales, purple cover, Angela Dezső, storytelling, folklore"
+        }
+    },
+    {
+        "product_id": 2,
+        "original_name": "Hansel y Gretel",
+        "price": 24.95,
+        "category": "Books",
+        "image_path": "images/producto2.png",
+        "listing": {
+            "title": "Hansel y Gretel Illustrated Edition by King & Sendak",
+            "description": "Discover a beautifully illustrated version of the timeless tale Hansel y Gretel, adapted by Stephen King and Maurice Sendak. This special edition invites readers into a richly detailed world where every page bursts with intricate, hand-drawn illustrations in muted, earthy tones. The cover art depicts the siblings navigating a dense, mysterious forest, setting a mood of suspense and wonder. Perfect for collectors and fans of classic storytelling, this edition balances haunting visuals with captivating narrative, making it an ideal addition to any bookshelf. Enjoy a unique reading experience that blends artistry with literary charm.",
+            "features": [
+                "Adaptation by Stephen King and Maurice Sendak",
+                "Rich, detailed illustrations in muted colors",
+                "Classic fairy tale brought to life",
+                "Compact design perfect for display",
+                "Engaging, atmospheric storytelling"
+            ],
+            "keywords": "Hansel y Gretel book, illustrated fairy tale, Stephen King adaptation, Maurice Sendak art, classic storybook, children's literature, collectible book edition, artistic book cover, narrative illustration, storybook gift, timeless fairy tale, illustrated edition, book for collectors"
+        }
+    },
+    {
+        "product_id": 3,
+        "original_name": "Hansel y Gretel",
+        "price": 19.95,
+        "category": "Books",
+        "image_path": "images/producto3.png",
+        "listing": {
+            "title": "Hansel y Gretel Illustrated Edition by Agnese Baruzzi",
+            "description": "Discover the timeless tale of Hansel y Gretel in this beautifully illustrated edition by Agnese Baruzzi. Featuring a whimsical cover design that resembles a charming gingerbread house, this book invites readers into a magical world inspired by the classic Grimm Brothers' story. The delicate pastel colors and intricate paper-cut style illustrations bring warmth and nostalgia, perfect for both young readers and collectors. Ideal for storytime, this edition offers a fresh, artistic interpretation that captures the imagination while honoring the beloved fairy tale.",
+            "features": [
+                "Classic Hansel y Gretel story retold in Spanish",
+                "Beautiful illustrated edition by Agnese Baruzzi",
+                "Warm pastel tones and playful gingerbread house design",
+                "Engaging paper-cut style cover artwork",
+                "Perfect for children and fairy tale enthusiasts"
+            ],
+            "keywords": "Hansel y Gretel, illustrated book, fairy tale, Grimm Brothers, children's story, Agnese Baruzzi, Spanish book, gingerbread house, classic tale, storybook, illustrated edition, kids book, paper-cut art"
+        }
+    }
+]
